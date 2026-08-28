@@ -27,18 +27,11 @@ jobs:
 
           path = Path('index.html')
           text = path.read_text()
-          old = """  function exportDate(date){
-            return `${pad(date.getMonth()+1)}/${pad(date.getDate())}/${date.getFullYear()}`;
-          }
-          """
-          new = """  function exportDate(date){
-            const weekday = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
-            return `${weekday} ${pad(date.getMonth()+1)}/${pad(date.getDate())}/${date.getFullYear()}`;
-          }
-          """
+          old = "    return `${pad(date.getMonth()+1)}/${pad(date.getDate())}/${date.getFullYear()}`;"
+          new = "    const weekday = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];\n    return `${weekday} ${pad(date.getMonth()+1)}/${pad(date.getDate())}/${date.getFullYear()}`;"
 
           if text.count(old) != 1:
-              raise SystemExit(f'Expected exactly one exportDate formatter, found {text.count(old)}')
+              raise SystemExit(f'Expected exactly one exportDate return line, found {text.count(old)}')
 
           path.write_text(text.replace(old, new, 1))
           PY
@@ -51,5 +44,6 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -- index.html
           git add -u -- .github/workflows/apply-weekday-table-export.yml
+          git diff --cached --check
           git commit -m 'Add weekdays to table export dates'
           git push origin HEAD:add-weekday-table-export
