@@ -1,0 +1,56 @@
+name: Apply weekday table export
+
+on:
+  push:
+    branches:
+      - add-weekday-table-export
+    paths:
+      - '.github/workflows/apply-weekday-table-export.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add weekday to table export dates
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text()
+          old = """  function exportDate(date){
+    return `${pad(date.getMonth()+1)}/${pad(date.getDate())}/${date.getFullYear()}`;
+  }
+"""
+          new = """  function exportDate(date){
+    const weekday = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
+    return `${weekday} ${pad(date.getMonth()+1)}/${pad(date.getDate())}/${date.getFullYear()}`;
+  }
+"""
+
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one exportDate formatter, found {text.count(old)}')
+
+          path.write_text(text.replace(old, new, 1))
+
+      - name: Remove one-time workflow and commit
+        shell: bash
+        run: |
+          rm -f .github/workflows/apply-weekday-table-export.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- index.html
+          git rm --cached -f .github/workflows/apply-weekday-table-export.yml >/dev/null 2>&1 || true
+          git add -u -- .github/workflows/apply-weekday-table-export.yml
+          git commit -m 'Add weekdays to table export dates'
+          git push origin HEAD:add-weekday-table-export
