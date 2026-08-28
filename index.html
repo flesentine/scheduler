@@ -5372,7 +5372,8 @@
   }
 
   function exportDate(date){
-    return `${pad(date.getMonth()+1)}/${pad(date.getDate())}/${date.getFullYear()}`;
+    const weekday = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
+    return `${weekday} ${pad(date.getMonth()+1)}/${pad(date.getDate())}/${date.getFullYear()}`;
   }
 
   function safeCalendarFilename(name){
