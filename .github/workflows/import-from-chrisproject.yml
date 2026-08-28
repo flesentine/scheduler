@@ -1,0 +1,46 @@
+name: Import current scheduler
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/import-from-chrisproject.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out scheduler
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          repository: flesentine/chrisproject
+          ref: main
+          path: _source
+
+      - name: Replace target tree from source
+        shell: bash
+        run: |
+          rsync -a --delete --exclude='.git/' --exclude='_source/' _source/ ./
+          rm -rf _source
+
+      - name: Commit imported tree
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -u -- :/
+          git ls-files --others --exclude-standard -z | xargs -0 -r git add --
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'Import scheduler from flesentine/chrisproject'
+          git push origin HEAD:main
